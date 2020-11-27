@@ -34,7 +34,7 @@ export const postsSubject: Observable<Object[] | null> = userSubject.pipe(
 
     if (posts) {
       isPostsLoadingSubject.next(false);
-      Logger.logWithColor('rgb(255,0,140)', `Posts for User "${posts[0].userId}" fetched successfully`);
+      Logger.logWithStateDataAndColor({ posts }, 'rgb(255,0,140)', `Posts for User "${posts[0].userId}" fetched successfully`);
     } else {
       Logger.log(`Posts are now "null"`);
     }

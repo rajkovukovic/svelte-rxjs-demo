@@ -1,17 +1,18 @@
 import { BehaviorSubject } from "rxjs";
-import { delay, skip, take } from "rxjs/operators";
+import { take } from "rxjs/operators";
 
+export interface AppState {
+  userId: number;
+  user: Object;
+  isUserLoading: boolean;
+  posts: Object;
+  isPostsLoading: boolean;
+};
 export interface Log {
   timestamp: string;
   message: string;
   color: string;
-  data: {
-    userId: number;
-    user: Object;
-    isUserLoading: boolean;
-    posts: Object;
-    isPostsLoading: boolean;
-  };
+  data: AppState;
 }
 
 let lastLogTime = Date.now();
@@ -34,8 +35,7 @@ export const selectedLogIndexStore = selectedLogIndexSubject.asObservable();
 function logWithConfig(
   msgs: any[],
   color: string | null = null,
-  prefix: string = '',
-  suffix: string = '',
+  stateData: Partial<AppState> = null,
 ) {
   window['combinedStores'].pipe(
     take(1),
@@ -52,11 +52,7 @@ function logWithConfig(
 
     msgs.forEach((msg, index) => logs.push({
       timestamp,
-      message: index === 0
-        ? prefix + String(msg)
-        : index === msgs.length - 1
-          ? String(msg) + suffix
-          : String(msg),
+      message: String(msg),
       color,
       data: {
         userId,
@@ -64,6 +60,7 @@ function logWithConfig(
         isUserLoading,
         posts,
         isPostsLoading,
+        ...stateData,
       }
     }));
     logsSubject.next(logs);
@@ -76,16 +73,12 @@ export class Logger {
     logWithConfig(args);
   }
 
-  static logWithPrefix(prefix: string, ...restArgs) {
-    logWithConfig(restArgs, undefined, prefix);
-  }
-
   static logWithColor(color: string, ...restArgs) {
     logWithConfig(restArgs, color);
   }
 
-  static logWithPrefixAndColor(prefix: string, color: string, ...restArgs) {
-    logWithConfig(restArgs, color, prefix);
+  static logWithStateDataAndColor(stateData: Partial<AppState>, color: string, ...restArgs) {
+    logWithConfig(restArgs, color, stateData);
   }
 
   static selectLog(index: number) {

@@ -23,7 +23,7 @@ export const userSubject = userIdSubject.pipe(
   switchMap(id => {
     if (id) {
       isUserLoadingSubject.next(true);
-      
+
       Logger.logWithColor('cyan', `Fetching User "${id}"`);
 
       return fetchUser(id);
@@ -36,7 +36,7 @@ export const userSubject = userIdSubject.pipe(
 
     if (user) {
       isUserLoadingSubject.next(false);
-      Logger.logWithColor('rgb(0,140,255)', `User "${user.id}" fetched successfully`);
+      Logger.logWithStateDataAndColor({ user }, 'rgb(0,140,255)', `User "${user.id}" fetched successfully`);
     } else {
       Logger.log(`User is now "null"`);
     }
