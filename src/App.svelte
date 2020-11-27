@@ -1,30 +1,123 @@
-<script>
-	export let name;
+<script lang="ts">
+  import { afterUpdate } from 'svelte';
+
+  import { prettyJSON } from './utils';
+  import { Logger, logsStore } from './stores/logs';
+  import { userIdStore, userStore } from './stores/user';
+  import { postsStore } from './stores/posts';
+
+  let logDiv;
+  const availableUserIds = [1, 2, 3];
+
+  function selectUser(userId: string) {
+    const nextUserId = userId === userIdStore.value ? null : userId;
+    Logger.logWithColor('cyan', `Selected userId: ${nextUserId}`);
+    userIdStore.next(nextUserId);
+  }
+
+  afterUpdate(() => {
+    logDiv.scrollTo(0, logDiv.scrollHeight);
+  });
 </script>
 
-<main>
-	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
-</main>
-
 <style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
+  main {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 50% 50%;
+  }
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
+  .app {
+    display: grid;
+    grid-template-rows: auto auto auto 1fr auto 1fr;
+    max-height: 100vh;
+    padding: 1em;
+  }
 
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
+  .user-id-list {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1em 0;
+  }
+  .user-id {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 3em;
+    min-width: 3em;
+    border: 1px solid gray;
+    font-size: 2em;
+    margin: 0 1em 0 0;
+    background-color: silver;
+    color: white;
+    cursor: pointer;
+  }
+
+  .user-id.active {
+    background-color: rgb(0, 122, 204);
+  }
+
+  .user-detail,
+  .posts-detail {
+    background-color: antiquewhite;
+    overflow-x: auto;
+    max-height: 100%;
+  }
+
+  .log {
+    position: relative;
+    overflow: auto;
+    padding: 1em;
+    padding-bottom: 30vh;
+    background-color: black;
+    color: silver;
+    font-family: monospace;
+  }
+
+  .log-timestamp {
+    color: gray;
+  }
+
+  .reset-log {
+    position: fixed;
+    bottom: 1em;
+    right: 1em;
+  }
 </style>
+
+<main>
+  <div class="app">
+    <h1>Pick user</h1>
+    <div class="user-id-list">
+      {#each availableUserIds as availableUserId}
+        <div
+          class="user-id"
+          class:active={availableUserId === $userIdStore}
+          on:click={() => selectUser(availableUserId)}>
+          {availableUserId}
+        </div>
+      {/each}
+    </div>
+
+    <h2>User</h2>
+    <pre
+      class="user-detail">{$userStore ? prettyJSON($userStore) : 'null'}</pre>
+
+    <h2>Posts</h2>
+    <pre
+      class="posts-detail">{$postsStore ? prettyJSON($postsStore) : 'null'}</pre>
+  </div>
+  <pre class="log" bind:this={logDiv}>
+    {#each $logsStore as log}
+      <div>
+        <span class="log-timestamp">{log.timestamp}</span>&nbsp;<span
+          class="log-message"
+          style={log.color ? `color: ${log.color};` : ''}>{log.message}</span>
+      </div>
+    {/each}
+    <button
+      class="reset-log"
+      on:click={() => logsStore.next([])}>Clear console</button>
+  </pre>
+</main>
