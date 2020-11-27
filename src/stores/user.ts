@@ -1,4 +1,4 @@
-import { BehaviorSubject, of, merge } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
 import { fromFetch } from "rxjs/fetch";
 import { distinctUntilChanged, shareReplay, switchMap, tap } from "rxjs/operators";
 import { Logger } from "./logs";
@@ -16,23 +16,30 @@ function fetchUser(id: String) {
 }
 
 export const userIdStore = new BehaviorSubject<string | null>(null);
-// export const isUserLoadingStore = new BehaviorSubject<boolean>(false);
+
+export const isUserLoadingStore = new BehaviorSubject<boolean>(false);
 
 export const userStore = userIdStore.pipe(
   switchMap(id => {
     if (id) {
       Logger.logWithColor('rgb(0,100,180)', `Fetching User "${id}"`);
-      return merge(of(null), fetchUser(id));
+
+      isUserLoadingStore.next(true);
+
+      return fetchUser(id);
     }
 
     return of(null);
   }),
   distinctUntilChanged(),
   tap(user => {
-    if (user)
+
+    if (user) {
+      isUserLoadingStore.next(false);
       Logger.logWithColor('rgb(0,140,255)', `User "${user.id}" fetched successfully`);
-    else
+    } else {
       Logger.log(`User is now "null"`);
+    }
   }),
   shareReplay(1),
 );

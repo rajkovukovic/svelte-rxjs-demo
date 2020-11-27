@@ -1,8 +1,8 @@
-import { combineLatest, Observable, of } from "rxjs";
+import { BehaviorSubject, merge, Observable, of } from "rxjs";
 import { distinctUntilChanged, shareReplay, switchMap, tap } from "rxjs/operators";
 import { fromFetch } from 'rxjs/fetch';
 import { Logger } from "./logs";
-import { userIdStore, userStore } from "./user";
+import { userStore } from "./user";
 
 function fetchPosts(userId: String) {
   return fromFetch(`https://jsonplaceholder.typicode.com/posts/?userId=${userId}`).pipe(switchMap(response => {
@@ -16,21 +16,29 @@ function fetchPosts(userId: String) {
   }));
 }
 
-export const postsStore: Observable<Object[] | null> = combineLatest([userIdStore, userStore]).pipe(
-  switchMap(([userId, user]) => {
-    if (userId && userId === user?.id) {
+export const isPostsLoadingStore = new BehaviorSubject<boolean>(false);
+
+export const postsStore: Observable<Object[] | null> = userStore.pipe(
+  switchMap((user) => {
+    if (user) {
       Logger.logWithColor('rgb(180,0,100)', `Fetching Posts for User "${user.id}"`);
-      return fetchPosts(user.id);
+
+      isPostsLoadingStore.next(true);
+
+      return merge(of(null), fetchPosts(user.id));
     }
 
     return of(null);
   }),
   distinctUntilChanged(),
   tap(posts => {
-    if (posts)
+
+    if (posts) {
+      isPostsLoadingStore.next(false);
       Logger.logWithColor('rgb(255,0,140)', `Posts for User "${posts[0].userId}" fetched successfully`);
-    else
+    } else {
       Logger.log(`Posts are now "null"`);
+    }
   }),
   shareReplay(1),
 );

@@ -1,10 +1,12 @@
 <script lang="ts">
+  import Loader from './Loader.svelte';
+  import { isUserLoadingStore } from './stores/user.ts';
   import { afterUpdate } from 'svelte';
 
   import { prettyJSON } from './utils';
   import { Logger, logsStore } from './stores/logs';
   import { userIdStore, userStore } from './stores/user';
-  import { postsStore } from './stores/posts';
+  import { isPostsLoadingStore, postsStore } from './stores/posts';
 
   let logDiv;
   const availableUserIds = [1, 2, 3];
@@ -100,11 +102,21 @@
       {/each}
     </div>
 
-    <h2>User</h2>
+    <h2>
+      User
+      {#if $isUserLoadingStore}
+        <Loader />
+      {/if}
+    </h2>
     <pre
       class="user-detail">{$userStore ? prettyJSON($userStore) : 'null'}</pre>
 
-    <h2>Posts</h2>
+    <h2>
+      Posts
+      {#if $isPostsLoadingStore}
+        <Loader />
+      {/if}
+    </h2>
     <pre
       class="posts-detail">{$postsStore ? prettyJSON($postsStore) : 'null'}</pre>
   </div>
