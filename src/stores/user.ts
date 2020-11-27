@@ -1,9 +1,9 @@
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject, combineLatest, of } from "rxjs";
 import { fromFetch } from "rxjs/fetch";
-import { distinctUntilChanged, shareReplay, switchMap, tap } from "rxjs/operators";
-import { Logger } from "./logs";
+import { distinctUntilChanged, map, shareReplay, switchMap, tap } from "rxjs/operators";
+import { Log, Logger, logsStore, selectedLogIndexStore } from "./logs";
 
-function fetchUser(id: String) {
+function fetchUser(id: String | number) {
   return fromFetch(`https://jsonplaceholder.typicode.com/users/${id}`).pipe(switchMap(response => {
     if (response.ok) {
       // OK return data
@@ -15,16 +15,16 @@ function fetchUser(id: String) {
   }));
 }
 
-export const userIdStore = new BehaviorSubject<string | null>(null);
+export const userIdSubject = new BehaviorSubject<number | null>(null);
 
-export const isUserLoadingStore = new BehaviorSubject<boolean>(false);
+export const isUserLoadingSubject = new BehaviorSubject<boolean>(false);
 
-export const userStore = userIdStore.pipe(
+export const userSubject = userIdSubject.pipe(
   switchMap(id => {
     if (id) {
-      Logger.logWithColor('rgb(0,100,180)', `Fetching User "${id}"`);
-
-      isUserLoadingStore.next(true);
+      isUserLoadingSubject.next(true);
+      
+      Logger.logWithColor('cyan', `Fetching User "${id}"`);
 
       return fetchUser(id);
     }
@@ -35,11 +35,30 @@ export const userStore = userIdStore.pipe(
   tap(user => {
 
     if (user) {
-      isUserLoadingStore.next(false);
+      isUserLoadingSubject.next(false);
       Logger.logWithColor('rgb(0,140,255)', `User "${user.id}" fetched successfully`);
     } else {
       Logger.log(`User is now "null"`);
     }
   }),
+  shareReplay(1),
+);
+
+export function changeUserId(nextId: number) {
+  userIdSubject.next(nextId);
+}
+
+export const userIdStore = combineLatest([userIdSubject, selectedLogIndexStore, logsStore]).pipe(
+  map(([userId, selectedLogIndex, logs]) => (selectedLogIndex < 0 ? userId : (logs[selectedLogIndex] as Log).data.userId)),
+  shareReplay(1),
+);
+
+export const isUserLoadingStore = combineLatest([isUserLoadingSubject, selectedLogIndexStore, logsStore]).pipe(
+  map(([isUserLoading, selectedLogIndex, logs]) => (selectedLogIndex < 0 ? isUserLoading : (logs[selectedLogIndex] as Log).data.isUserLoading)),
+  shareReplay(1),
+);
+
+export const userStore = combineLatest([userSubject, selectedLogIndexStore, logsStore]).pipe(
+  map(([user, selectedLogIndex, logs]) => (selectedLogIndex < 0 ? user : (logs[selectedLogIndex] as Log).data.user)),
   shareReplay(1),
 );

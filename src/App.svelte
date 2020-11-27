@@ -1,20 +1,19 @@
 <script lang="ts">
   import Loader from './Loader.svelte';
-  import { isUserLoadingStore } from './stores/user.ts';
   import { afterUpdate } from 'svelte';
 
   import { prettyJSON } from './utils';
-  import { Logger, logsStore } from './stores/logs';
-  import { userIdStore, userStore } from './stores/user';
+  import './stores/combined-stores';
+  import { Logger, logsStore, selectedLogIndexStore } from './stores/logs';
+  import { changeUserId, isUserLoadingStore, userIdStore, userStore } from './stores/user';
   import { isPostsLoadingStore, postsStore } from './stores/posts';
 
   let logDiv;
   const availableUserIds = [1, 2, 3];
 
-  function selectUser(userId: string) {
-    const nextUserId = userId === userIdStore.value ? null : userId;
-    Logger.logWithColor('cyan', `Selected userId: ${nextUserId}`);
-    userIdStore.next(nextUserId);
+  function selectUser(userId: number) {
+    const nextUserId = userId === $userIdStore ? null : userId;
+    changeUserId(nextUserId);
   }
 
   afterUpdate(() => {
@@ -67,7 +66,7 @@
     max-height: 100%;
   }
 
-  .log {
+  .log-container {
     position: relative;
     overflow: auto;
     padding: 1em;
@@ -75,6 +74,15 @@
     background-color: black;
     color: silver;
     font-family: monospace;
+  }
+
+  .log-item:hover {
+    background-color: rgb(32, 32, 32);
+    cursor: pointer;
+  }
+
+  .log-item:not(.active) {
+    opacity: 0.4;
   }
 
   .log-timestamp {
@@ -120,16 +128,22 @@
     <pre
       class="posts-detail">{$postsStore ? prettyJSON($postsStore) : 'null'}</pre>
   </div>
-  <pre class="log" bind:this={logDiv}>
-    {#each $logsStore as log}
-      <div>
-        <span class="log-timestamp">{log.timestamp}</span>&nbsp;<span
+  <pre
+    class="log-container"
+    bind:this={logDiv}>
+    {#each $logsStore as log, index}
+      <div
+        class="log-item"
+        class:active={$selectedLogIndexStore < 0 ? true : index <= $selectedLogIndexStore}
+        on:click={() => Logger.selectLog(index)}>
+        <span
+          class="log-timestamp">{log.timestamp}</span>&nbsp;<span
           class="log-message"
           style={log.color ? `color: ${log.color};` : ''}>{log.message}</span>
       </div>
     {/each}
     <button
       class="reset-log"
-      on:click={() => logsStore.next([])}>Clear console</button>
+      on:click={() => Logger.clearLogs()}>Clear console</button>
   </pre>
 </main>
