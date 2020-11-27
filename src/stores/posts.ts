@@ -1,10 +1,19 @@
-import { combineLatest, NEVER, Observable, of } from "rxjs";
+import { combineLatest, Observable, of } from "rxjs";
 import { distinctUntilChanged, shareReplay, switchMap, tap } from "rxjs/operators";
+import { fromFetch } from 'rxjs/fetch';
 import { Logger } from "./logs";
 import { userIdStore, userStore } from "./user";
 
 function fetchPosts(userId: String) {
-  return fetch(`https://jsonplaceholder.typicode.com/posts/?userId=${userId}`).then(response => response.json());
+  return fromFetch(`https://jsonplaceholder.typicode.com/posts/?userId=${userId}`).pipe(switchMap(response => {
+    if (response.ok) {
+      // OK return data
+      return response.json();
+    } else {
+      // Server is returning a status requiring the client to try something else.
+      return of({ error: true, message: `Error ${response.status}` });
+    }
+  }));
 }
 
 export const postsStore: Observable<Object[] | null> = combineLatest([userIdStore, userStore]).pipe(

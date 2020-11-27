@@ -1,9 +1,18 @@
 import { BehaviorSubject, of, merge } from "rxjs";
+import { fromFetch } from "rxjs/fetch";
 import { distinctUntilChanged, shareReplay, switchMap, tap } from "rxjs/operators";
 import { Logger } from "./logs";
 
 function fetchUser(id: String) {
-  return fetch(`https://jsonplaceholder.typicode.com/users/${id}`).then(response => response.json());
+  return fromFetch(`https://jsonplaceholder.typicode.com/users/${id}`).pipe(switchMap(response => {
+    if (response.ok) {
+      // OK return data
+      return response.json();
+    } else {
+      // Server is returning a status requiring the client to try something else.
+      return of({ error: true, message: `Error ${response.status}` });
+    }
+  }));
 }
 
 export const userIdStore = new BehaviorSubject<string | null>(null);
