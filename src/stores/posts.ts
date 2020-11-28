@@ -34,10 +34,17 @@ export const postsSubject: Observable<Object[] | null> = userSubject.pipe(
 
     if (posts) {
       isPostsLoadingSubject.next(false);
-      Logger.logWithStateDataAndColor({ posts }, 'rgb(255,0,140)', `Posts for User "${posts[0].userId}" fetched successfully`);
-    } else {
-      Logger.log(`Posts are now "null"`);
     }
+
+    Logger.logWithOptions(
+      {
+        color: posts ? 'rgb(255,0,140)' : undefined,
+        stateData: { posts }
+      },
+      posts
+        ? `Posts for User "${posts[0].userId}" fetched successfully`
+        : `Posts are now "null"`,
+    );
   }),
   shareReplay(1),
 );

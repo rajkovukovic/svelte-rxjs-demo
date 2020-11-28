@@ -15,6 +15,11 @@ export interface Log {
   data: AppState;
 }
 
+export interface LogOptions {
+  color?: string;
+  stateData: Partial<AppState>;
+}
+
 let lastLogTime = Date.now();
 
 function formatTime(timeInMilliseconds: number) {
@@ -77,8 +82,8 @@ export class Logger {
     logWithConfig(restArgs, color);
   }
 
-  static logWithStateDataAndColor(stateData: Partial<AppState>, color: string, ...restArgs) {
-    logWithConfig(restArgs, color, stateData);
+  static logWithOptions(options: LogOptions, ...restArgs) {
+    logWithConfig(restArgs, options.color, options.stateData);
   }
 
   static selectLog(index: number) {

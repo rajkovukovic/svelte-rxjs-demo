@@ -36,10 +36,17 @@ export const userSubject = userIdSubject.pipe(
 
     if (user) {
       isUserLoadingSubject.next(false);
-      Logger.logWithStateDataAndColor({ user }, 'rgb(0,140,255)', `User "${user.id}" fetched successfully`);
-    } else {
-      Logger.log(`User is now "null"`);
     }
+
+    Logger.logWithOptions(
+      {
+        color: user ? 'rgb(0,140,255)' : undefined,
+        stateData: { user }
+      },
+      user
+        ? `User "${user.id}" fetched successfully`
+        : `User is now "null"`,
+    );
   }),
   shareReplay(1),
 );
