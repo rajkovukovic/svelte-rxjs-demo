@@ -31,10 +31,9 @@ export const userSubject = userIdSubject.pipe(
 
     return of(null);
   }),
-  distinctUntilChanged(),
   tap(user => {
 
-    if (user) {
+    if (isUserLoadingSubject.value) {
       isUserLoadingSubject.next(false);
     }
 
@@ -48,6 +47,7 @@ export const userSubject = userIdSubject.pipe(
         : `User is now "null"`,
     );
   }),
+  distinctUntilChanged(),
   shareReplay(1),
 );
 

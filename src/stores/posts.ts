@@ -16,6 +16,8 @@ function fetchPosts(userId: String) {
   }));
 }
 
+const LOADING_POSTS = Symbol('LOADING_POSTS');
+
 export const isPostsLoadingSubject = new BehaviorSubject<boolean>(false);
 export const postsSubject: Observable<Object[] | null> = userSubject.pipe(
   switchMap((user) => {
@@ -24,18 +26,21 @@ export const postsSubject: Observable<Object[] | null> = userSubject.pipe(
 
       Logger.logWithColor('rgb(180,0,100)', `Fetching Posts for User "${user.id}"`);
 
-      return merge(of(null), fetchPosts(user.id));
+      return merge(of(LOADING_POSTS), fetchPosts(user.id));
     }
 
     return of(null);
   }),
+  tap(posts => {
+    if (posts !== LOADING_POSTS) {
+      if (isPostsLoadingSubject.value) {
+        isPostsLoadingSubject.next(false);
+      }
+    }
+  }),
+  map(posts => posts === LOADING_POSTS ? null : posts),
   distinctUntilChanged(),
   tap(posts => {
-
-    if (posts) {
-      isPostsLoadingSubject.next(false);
-    }
-
     Logger.logWithOptions(
       {
         color: posts ? 'rgb(255,0,140)' : undefined,
@@ -47,6 +52,7 @@ export const postsSubject: Observable<Object[] | null> = userSubject.pipe(
     );
   }),
   shareReplay(1),
+  // switchMap(posts => posts ? shareReplay(1) : of(posts)),
 );
 
 export const isPostsLoadingStore = combineLatest([isPostsLoadingSubject, selectedLogIndexStore, logsStore]).pipe(
